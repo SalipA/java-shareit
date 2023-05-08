@@ -1,7 +1,9 @@
 package ru.practicum.shareit.booking.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.shareit.booking.annotation.BookingStartEndTimeConstraint;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.service.BookingService;
 import ru.practicum.shareit.booking.service.States;
@@ -16,6 +18,7 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequestMapping(path = "/bookings")
+@Validated
 public class BookingController {
     private final BookingService bookingService;
 
@@ -25,7 +28,7 @@ public class BookingController {
 
     @PostMapping
     public BookingDto create(@RequestHeader("X-Sharer-User-Id") Long userId,
-                             @Valid @RequestBody BookingDto bookingDto) {
+                             @Valid @RequestBody @BookingStartEndTimeConstraint BookingDto bookingDto) {
         log.info("POST: /bookings, userId = {}, value = {}", userId, bookingDto);
         return bookingService.create(userId, bookingDto);
     }

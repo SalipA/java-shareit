@@ -20,6 +20,8 @@ import ru.practicum.shareit.user.controller.UserController;
 import ru.practicum.shareit.user.exception.InvalidEmailException;
 import ru.practicum.shareit.user.exception.UserNotFoundException;
 
+import javax.validation.ConstraintViolation;
+import javax.validation.ConstraintViolationException;
 import java.util.Map;
 import java.util.Objects;
 
@@ -104,8 +106,10 @@ public class ShareItAppExceptionController {
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, String> handleStartEndValidExp(final BookingStartEndTimeValidationException exp) {
-        return Map.of("error", exp.getMessage());
+    public Map<String, String> handleStartEndValidExp(final ConstraintViolationException exp) {
+        log.error(exp.getMessage());
+        ConstraintViolation<?> violation = exp.getConstraintViolations().iterator().next();
+        return Map.of("error", violation.getMessageTemplate());
     }
 
     @ExceptionHandler

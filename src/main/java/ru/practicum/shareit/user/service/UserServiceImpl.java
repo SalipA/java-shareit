@@ -75,7 +75,8 @@ public class UserServiceImpl implements UserService {
         return userMapper.listToUserDto(userRepository.findAll());
     }
 
-    private User checkUser(Long userId) {
+    @Override
+    public User checkUser(Long userId) {
         Optional<User> userFromDataBase = userRepository.findById(userId);
         if (userFromDataBase.isPresent()) {
             return userFromDataBase.get();

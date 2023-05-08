@@ -4,11 +4,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.dto.BookingView;
+import ru.practicum.shareit.booking.exception.BookingOwnerCreateException;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.BookingStatuses;
-import ru.practicum.shareit.booking.repository.BookingRepository;
+import ru.practicum.shareit.booking.service.BookingService;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.exception.CommentAddAccessException;
+import ru.practicum.shareit.item.exception.ItemBookingAccessException;
 import ru.practicum.shareit.item.exception.ItemEditAccessException;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.exception.ItemNotFoundException;
@@ -16,9 +18,8 @@ import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.CommentRepository;
 import ru.practicum.shareit.item.repository.ItemRepository;
-import ru.practicum.shareit.user.repository.UserRepository;
-import ru.practicum.shareit.user.exception.UserNotFoundException;
 import ru.practicum.shareit.user.model.User;
+import ru.practicum.shareit.user.service.UserService;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -27,20 +28,20 @@ import java.util.Optional;
 @Slf4j
 @Service
 public class ItemServiceImpl implements ItemService {
-    private final UserRepository userRepository;
+    private final UserService userService;
     private final ItemMapper itemMapper;
     private final ItemRepository itemRepository;
-    private final BookingRepository bookingRepository;
+    private final BookingService bookingService;
     private final CommentRepository commentRepository;
     private final CommentMapper commentMapper;
 
-    public ItemServiceImpl(UserRepository userRepository, ItemMapper itemMapper, ItemRepository itemRepository,
-                           BookingRepository bookingRepository, CommentRepository commentRepository, CommentMapper
+    public ItemServiceImpl(UserService userService, ItemMapper itemMapper, ItemRepository itemRepository,
+                           BookingService bookingService, CommentRepository commentRepository, CommentMapper
                                commentMapper) {
-        this.userRepository = userRepository;
+        this.userService = userService;
         this.itemMapper = itemMapper;
         this.itemRepository = itemRepository;
-        this.bookingRepository = bookingRepository;
+        this.bookingService = bookingService;
         this.commentRepository = commentRepository;
         this.commentMapper = commentMapper;
     }
@@ -48,7 +49,7 @@ public class ItemServiceImpl implements ItemService {
     @Transactional
     @Override
     public ItemDto create(Long userId, ItemDto itemDto) {
-        checkUser(userId);
+        userService.checkUser(userId);
         Item item = itemMapper.toItem(itemDto);
         item.setOwner(userId);
         item.setAvailable(true);
@@ -60,7 +61,7 @@ public class ItemServiceImpl implements ItemService {
     @Transactional
     @Override
     public ItemDto update(Long userId, Long itemId, ItemDto itemDto) {
-        checkUser(userId);
+        userService.checkUser(userId);
         Item item = itemMapper.toItem(itemDto);
         Item itemFromDataBase = checkItem(itemId);
         if (itemFromDataBase.getOwner().equals(userId)) {
@@ -86,18 +87,16 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public ItemDto read(Long itemId, Long userId) {
         LocalDateTime now = LocalDateTime.now();
-        checkUser(userId);
+        userService.checkUser(userId);
         Item itemFromDataBase = checkItem(itemId);
         ItemDto itemDto = itemMapper.toItemDto(itemFromDataBase);
         if (isUserItemOwner(userId, itemId)) {
-            Optional<Booking> bookingNextOpt =
-                bookingRepository.findFirstByItem_IdAndStatusAndStartIsGreaterThanEqualOrderByStartAsc(itemId,
-                    BookingStatuses.APPROVED, now);
+            Optional<Booking> bookingNextOpt = bookingService.findNextBookingForItem(itemId, BookingStatuses.APPROVED,
+                now);
             bookingNextOpt.ifPresent(booking -> itemDto.setNextBooking(new BookingView(booking.getId(),
                 booking.getBooker().getId(), booking.getStart(), booking.getEnd())));
-            Optional<Booking> bookingLastOpt =
-                bookingRepository.findFirstByItem_IdAndStatusAndStartIsLessThanEqualOrderByStartDesc(itemId,
-                    BookingStatuses.APPROVED, now);
+            Optional<Booking> bookingLastOpt = bookingService.findLastBookingForItem(itemId, BookingStatuses.APPROVED,
+                now);
             bookingLastOpt.ifPresent(booking -> itemDto.setLastBooking(new BookingView(booking.getId(),
                 booking.getBooker().getId(), booking.getStart(), booking.getEnd())));
         }
@@ -110,14 +109,10 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public List<ItemDto> readAllByUserId(Long userId) {
         LocalDateTime now = LocalDateTime.now();
-        checkUser(userId);
+        userService.checkUser(userId);
         List<Item> items = itemRepository.findItemsByOwnerOrderByIdAsc(userId);
-        List<Booking> bookingsLast =
-            bookingRepository.findAllByItemInAndStatusAndStartIsLessThanEqualOrderByStartDesc(items,
-                BookingStatuses.APPROVED, now);
-        List<Booking> bookingsNext =
-            bookingRepository.findAllByItemInAndStatusAndStartIsGreaterThanEqualOrderByStartAsc(items,
-                BookingStatuses.APPROVED, now);
+        List<Booking> bookingsLast = bookingService.findAllLastBookingForItems(items, BookingStatuses.APPROVED, now);
+        List<Booking> bookingsNext = bookingService.findAllNextBookingForItems(items, BookingStatuses.APPROVED, now);
         List<ItemDto> itemsDto = itemMapper.listToItemDto(items);
         for (ItemDto item : itemsDto) {
             for (Booking booking : bookingsLast) {
@@ -160,7 +155,7 @@ public class ItemServiceImpl implements ItemService {
     @Transactional
     @Override
     public CommentDto createComment(Long userId, Long itemId, CommentDto commentDto) {
-        User userFromDataBase = checkUser(userId);
+        User userFromDataBase = userService.checkUser(userId);
         Item itemFromDataBase = checkItem(itemId);
         LocalDateTime now = LocalDateTime.now();
         checkBooking(userId, itemId, now);
@@ -173,7 +168,8 @@ public class ItemServiceImpl implements ItemService {
         return commentMapper.toCommentDto(commentFromDataBase);
     }
 
-    private Item checkItem(Long itemId) {
+    @Override
+    public Item checkItem(Long itemId) {
         Optional<Item> itemFromDataBase = itemRepository.findById(itemId);
         if (itemFromDataBase.isPresent()) {
             return itemFromDataBase.get();
@@ -183,19 +179,35 @@ public class ItemServiceImpl implements ItemService {
         }
     }
 
-    private User checkUser(Long userId) {
-        Optional<User> userFromDataBase = userRepository.findById(userId);
-        if (userFromDataBase.isPresent()) {
-            return userFromDataBase.get();
+    @Override
+    public List<Item> findItemsByOwner(Long userId) {
+        List<Item> itemFromDataBase = itemRepository.findItemsByOwnerOrderByIdAsc(userId);
+        if (itemFromDataBase.isEmpty()) {
+            log.error("User id = {} is not items owner", userId);
+            throw new ItemNotFoundException(itemFromDataBase, userId);
         } else {
-            log.error("User id = {} is not found", userId);
-            throw new UserNotFoundException(userId);
+            return itemFromDataBase;
+        }
+    }
+
+    @Override
+    public Item checkItemIsAvailableForBooking(Long userId, Long itemId) {
+        Item itemFromDataBase = checkItem(itemId);
+        if (!itemFromDataBase.getOwner().equals(userId)) {
+            if (itemFromDataBase.getAvailable()) {
+                return itemFromDataBase;
+            } else {
+                log.error("Item id = {} is not available to sharing", itemId);
+                throw new ItemBookingAccessException(itemId);
+            }
+        } else {
+            log.error("User id = {} can not book Item id = {} because is item owner", userId, itemId);
+            throw new BookingOwnerCreateException(userId, itemId);
         }
     }
 
     private void checkBooking(Long userId, Long itemId, LocalDateTime dateTime) {
-        Optional<Booking> bookingFromDataBase =
-            bookingRepository.findFirstByBooker_IdAndItem_IdAndEndBeforeOrderByStartDesc(userId, itemId, dateTime);
+        Optional<Booking> bookingFromDataBase = bookingService.findEndedBookingForItemByUser(userId, itemId, dateTime);
         if (bookingFromDataBase.isEmpty()) {
             log.error("User id = {} has no access to add comment to Item id = {}", userId, itemId);
             throw new CommentAddAccessException(userId, itemId);
