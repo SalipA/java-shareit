@@ -1,5 +1,6 @@
 package ru.practicum.shareit.booking.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import ru.practicum.shareit.booking.model.BookingStatuses;
 import ru.practicum.shareit.item.dto.ItemView;
@@ -16,9 +17,12 @@ import java.time.LocalDateTime;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@ToString
+@EqualsAndHashCode
 public class BookingDto {
     private Long id;
     @NotNull(message = "ItemId должен быть указан")
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private Long itemId;
     @FutureOrPresent(message = "Дата начала аренды должна быть текущей или в будущем")
     @NotNull(message = "Дата начала аренды должна быть указана")

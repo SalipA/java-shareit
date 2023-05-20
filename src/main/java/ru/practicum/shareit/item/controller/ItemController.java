@@ -1,12 +1,14 @@
 package ru.practicum.shareit.item.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.service.ItemService;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Min;
 import java.util.List;
 
 /**
@@ -42,15 +44,17 @@ public class ItemController {
     }
 
     @GetMapping
-    public List<ItemDto> readAllByUserId(@RequestHeader("X-Sharer-User-Id") Long userId) {
-        log.info("GET: /items, userId = {}", userId);
-        return itemService.readAllByUserId(userId);
+    public List<ItemDto> readAllByUserId(@RequestHeader("X-Sharer-User-Id") Long userId, @RequestParam(required =
+        false) @Nullable @Min(0) Integer from, @RequestParam(required = false) @Nullable @Min(1) Integer size) {
+        log.info("GET: /items, userId = {}, pagination: from {}, size {}",userId, from, size);
+        return itemService.readAllByUserId(userId, from, size);
     }
 
     @GetMapping(value = "/search", params = {"text"})
-    public List<ItemDto> searchItems(@RequestParam String text) {
-        log.info("GET: /items/search, text = {}", text);
-        return itemService.searchItems(text);
+    public List<ItemDto> searchItems(@RequestParam String text, @RequestParam(required =
+        false) @Nullable @Min(0) Integer from, @RequestParam(required = false) @Nullable @Min(1) Integer size) {
+        log.info("GET: /items/search, text = {}, pagination: from {}, size {}", text, from, size);
+        return itemService.searchItems(text, from, size);
     }
 
     @PostMapping("/{itemId}/comment")

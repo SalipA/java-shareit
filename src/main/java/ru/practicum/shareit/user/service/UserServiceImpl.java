@@ -31,7 +31,7 @@ public class UserServiceImpl implements UserService {
             User userFromDataBase = userRepository.save(user);
             log.info("User id = {} has been created", userFromDataBase.getId());
             return userMapper.toUserDto(userFromDataBase);
-        } catch (Exception exp) {
+        } catch (RuntimeException exp) {
             log.error("Users email = {} is not distinct", user.getEmail());
             throw new InvalidEmailException(user.getEmail());
         }

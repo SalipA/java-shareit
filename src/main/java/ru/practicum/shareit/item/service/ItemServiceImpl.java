@@ -1,6 +1,9 @@
 package ru.practicum.shareit.item.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.dto.BookingView;
@@ -22,6 +25,7 @@ import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.service.UserService;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -74,6 +78,9 @@ public class ItemServiceImpl implements ItemService {
             if (item.getAvailable() == null) {
                 item.setAvailable(itemFromDataBase.getAvailable());
             }
+            if (item.getRequest() == null) {
+                item.setRequest(itemFromDataBase.getRequest());
+            }
             item.setId(itemId);
             item.setOwner(userId);
         } else {
@@ -107,10 +114,17 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public List<ItemDto> readAllByUserId(Long userId) {
+    public List<ItemDto> readAllByUserId(Long userId, Integer from, Integer size) {
         LocalDateTime now = LocalDateTime.now();
         userService.checkUser(userId);
-        List<Item> items = itemRepository.findItemsByOwnerOrderByIdAsc(userId);
+        Pageable pageRequest;
+        if (from == null && size == null) {
+            pageRequest = Pageable.unpaged();
+        } else {
+            pageRequest = PageRequest.of(from != null ? from / size : 0, size);
+        }
+        Page<Item> pageItems = itemRepository.findItemsByOwnerOrderByIdAsc(userId, pageRequest);
+        List<Item> items = pageItems.getContent();
         List<Booking> bookingsLast = bookingService.findAllLastBookingForItems(items, BookingStatuses.APPROVED, now);
         List<Booking> bookingsNext = bookingService.findAllNextBookingForItems(items, BookingStatuses.APPROVED, now);
         List<ItemDto> itemsDto = itemMapper.listToItemDto(items);
@@ -134,22 +148,31 @@ public class ItemServiceImpl implements ItemService {
         }
         List<Comment> comments = commentRepository.findAllByItemInOrderByIdDesc(items);
         for (ItemDto item : itemsDto) {
+            List<CommentDto> commentDtoList = new ArrayList<>();
             for (Comment comment : comments) {
-                while (item.getId().equals(comment.getItem().getId())) {
-                    item.addComment(commentMapper.toCommentDto(comment));
+                if (item.getId().equals(comment.getItem().getId())) {
+                    CommentDto commentDto = commentMapper.toCommentDto(comment);
+                    commentDtoList.add(commentDto);
                 }
             }
+            item.setComments(commentDtoList);
         }
         return itemsDto;
     }
 
     @Override
-    public List<ItemDto> searchItems(String text) {
+    public List<ItemDto> searchItems(String text, Integer from, Integer size) {
+        Pageable pageRequest;
+        if (from == null && size == null) {
+            pageRequest = Pageable.unpaged();
+        } else {
+            pageRequest = PageRequest.of(from != null ? from / size : 0, size);
+        }
         if (text.isEmpty()) {
             log.warn("search request was empty");
             return List.of();
         }
-        return itemMapper.listToItemDto(itemRepository.searchItem(text));
+        return itemMapper.listToItemDto(itemRepository.searchItem(text, pageRequest).getContent());
     }
 
     @Transactional
@@ -181,7 +204,8 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public List<Item> findItemsByOwner(Long userId) {
-        List<Item> itemFromDataBase = itemRepository.findItemsByOwnerOrderByIdAsc(userId);
+        List<Item> itemFromDataBase = itemRepository.findItemsByOwnerOrderByIdAsc(userId,
+            Pageable.unpaged()).getContent();
         if (itemFromDataBase.isEmpty()) {
             log.error("User id = {} is not items owner", userId);
             throw new ItemNotFoundException(itemFromDataBase, userId);

@@ -2,6 +2,9 @@ package ru.practicum.shareit.booking.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.dto.BookingDto;
@@ -15,7 +18,6 @@ import ru.practicum.shareit.item.service.ItemService;
 import ru.practicum.shareit.user.service.UserService;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -44,7 +46,7 @@ public class BookingServiceImpl implements BookingService {
         booking.setItem(itemService.checkItemIsAvailableForBooking(userId, bookingDto.getItemId()));
         Booking bookingFromDataBase = bookingRepository.save(booking);
         log.info("Booking id = {} has been created", bookingFromDataBase.getId());
-        return bookingMapper.toBookingDto(bookingFromDataBase);
+        return BookingMapper.toBookingDto(bookingFromDataBase);
     }
 
     @Override
@@ -54,7 +56,7 @@ public class BookingServiceImpl implements BookingService {
         if (bookingFromDataBase.isPresent()) {
             validateUserAccess(userId, bookingFromDataBase.get());
             log.info(bookingFromDataBase.get().toString());
-            return bookingMapper.toBookingDto(bookingFromDataBase.get());
+            return BookingMapper.toBookingDto(bookingFromDataBase.get());
         } else {
             log.error("Booking id = {} is not found", bookingId);
             throw new BookingNotFoundException(bookingId);
@@ -89,64 +91,82 @@ public class BookingServiceImpl implements BookingService {
             log.error("Booking id = {} is not found", bookingId);
             throw new BookingNotFoundException(bookingId);
         }
-        return bookingMapper.toBookingDto(bookingFromDataBase.get());
+        return BookingMapper.toBookingDto(bookingFromDataBase.get());
     }
 
     @Override
-    public List<BookingDto> getAllByState(Long userId, States state) {
+    public List<BookingDto> getAllByState(Long userId, States state, Integer from, Integer size) {
         userService.checkUser(userId);
-        List<Booking> listBookingFromDataBase = new ArrayList<>();
+        Page<Booking> listBookingFromDataBase = null;
+        Pageable pageRequest = setPageRequest(from, size);
         switch (state) {
             case ALL:
-                listBookingFromDataBase = bookingRepository.findAllByBooker_IdOrderByStartDesc(userId);
+                listBookingFromDataBase = bookingRepository.findAllByBooker_IdOrderByStartDesc(userId,
+                    pageRequest);
                 break;
             case FUTURE:
-                listBookingFromDataBase = bookingRepository.findAllByBooker_IdAndStartAfterOrderByStartDesc(userId, LocalDateTime.now());
+                listBookingFromDataBase = bookingRepository.findAllByBooker_IdAndStartAfterOrderByStartDesc(userId,
+                    LocalDateTime.now(), pageRequest);
                 break;
             case PAST:
-                listBookingFromDataBase = bookingRepository.findAllByBooker_IdAndEndBeforeOrderByStartDesc(userId, LocalDateTime.now());
+                listBookingFromDataBase = bookingRepository.findAllByBooker_IdAndEndBeforeOrderByStartDesc(userId,
+                    LocalDateTime.now(), pageRequest);
                 break;
             case CURRENT:
                 LocalDateTime now = LocalDateTime.now();
-                listBookingFromDataBase = bookingRepository.findAllByBooker_IdAndStartBeforeAndEndAfterOrderByStartDesc(userId, now, now);
+                listBookingFromDataBase =
+                    bookingRepository.findAllByBooker_IdAndStartBeforeAndEndAfterOrderByStartDesc(userId, now, now,
+                        pageRequest);
                 break;
             case WAITING:
-                listBookingFromDataBase = bookingRepository.findAllByBooker_IdAndStatusOrderByStartDesc(userId, BookingStatuses.WAITING);
+                listBookingFromDataBase = bookingRepository.findAllByBooker_IdAndStatusOrderByStartDesc(userId,
+                    BookingStatuses.WAITING, pageRequest);
                 break;
             case REJECTED:
-                listBookingFromDataBase = bookingRepository.findAllByBooker_IdAndStatusOrderByStartDesc(userId, BookingStatuses.REJECTED);
+                listBookingFromDataBase = bookingRepository.findAllByBooker_IdAndStatusOrderByStartDesc(userId,
+                    BookingStatuses.REJECTED, pageRequest);
                 break;
         }
-        return bookingMapper.listToBookingDto(listBookingFromDataBase);
+        return listBookingFromDataBase.map(BookingMapper::toBookingDto).getContent();
     }
 
     @Override
-    public List<BookingDto> getAllByOwnerAndState(Long userId, States state) {
+    public List<BookingDto> getAllByOwnerAndState(Long userId, States state, Integer from, Integer size) {
         userService.checkUser(userId);
-        List<Booking> listBookingFromDataBase = new ArrayList<>();
+        Page<Booking> listBookingFromDataBase = null;
+        Pageable pageRequest = setPageRequest(from, size);
         List<Item> itemFromDataBase = itemService.findItemsByOwner(userId);
             switch (state) {
                 case ALL:
-                    listBookingFromDataBase = bookingRepository.findAllByItemInOrderByStartDesc(itemFromDataBase);
+                    listBookingFromDataBase = bookingRepository.findAllByItemInOrderByStartDesc(itemFromDataBase, pageRequest);
                     break;
                 case FUTURE:
-                    listBookingFromDataBase = bookingRepository.findAllByItemInAndStartGreaterThanEqualOrderByStartDesc(itemFromDataBase, LocalDateTime.now());
+                    listBookingFromDataBase =
+                        bookingRepository.findAllByItemInAndStartGreaterThanEqualOrderByStartDesc(itemFromDataBase,
+                            LocalDateTime.now(), pageRequest);
                     break;
                 case PAST:
-                    listBookingFromDataBase = bookingRepository.findAllByItemInAndEndLessThanEqualOrderByStartDesc(itemFromDataBase, LocalDateTime.now());
+                    listBookingFromDataBase =
+                        bookingRepository.findAllByItemInAndEndLessThanEqualOrderByStartDesc(itemFromDataBase,
+                            LocalDateTime.now(), pageRequest);
                     break;
                 case CURRENT:
                     LocalDateTime now = LocalDateTime.now();
-                    listBookingFromDataBase = bookingRepository.findAllByItemInAndStartLessThanEqualAndEndGreaterThanEqualOrderByStartDesc(itemFromDataBase, now, now);
+                    listBookingFromDataBase =
+                        bookingRepository.findAllByItemInAndStartLessThanEqualAndEndGreaterThanEqualOrderByStartDesc(itemFromDataBase, now, now, pageRequest);
                     break;
                 case WAITING:
-                    listBookingFromDataBase = bookingRepository.findAllByItemInAndStatusOrderByStartDesc(itemFromDataBase, BookingStatuses.WAITING);
+                    listBookingFromDataBase =
+                        bookingRepository.findAllByItemInAndStatusOrderByStartDesc(itemFromDataBase,
+                            BookingStatuses.WAITING, pageRequest);
                     break;
                 case REJECTED:
-                    listBookingFromDataBase = bookingRepository.findAllByItemInAndStatusOrderByStartDesc(itemFromDataBase, BookingStatuses.REJECTED);
+                    listBookingFromDataBase =
+                        bookingRepository.findAllByItemInAndStatusOrderByStartDesc(itemFromDataBase,
+                            BookingStatuses.REJECTED, pageRequest);
                     break;
             }
-        return bookingMapper.listToBookingDto(listBookingFromDataBase);
+        return listBookingFromDataBase.map(BookingMapper::toBookingDto).getContent();
     }
 
     @Override
@@ -182,6 +202,14 @@ public class BookingServiceImpl implements BookingService {
         if (!(booking.getBooker().getId().equals(userId) || booking.getItem().getOwner().equals(userId))) {
             log.error("User id = {} has not access to read info booking id = {}", userId, booking.getId());
             throw new BookingReadAccessException(userId, booking.getId());
+        }
+    }
+
+    private Pageable setPageRequest(Integer from, Integer size) {
+        if (from == null && size == null) {
+            return Pageable.unpaged();
+        } else {
+            return PageRequest.of(from != null ? from / size : 0, size);
         }
     }
 }
