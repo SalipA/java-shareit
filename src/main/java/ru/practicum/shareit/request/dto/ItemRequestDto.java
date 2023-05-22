@@ -5,6 +5,7 @@ import ru.practicum.shareit.item.model.Item;
 
 import javax.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -20,7 +21,7 @@ public class ItemRequestDto {
     @NotBlank(message = "Описание запроса на может быть пустым")
     private String description;
     private LocalDateTime created;
-    private List<Item> items;
+    private List<Item> items = new ArrayList<>();
 
     public ItemRequestDto(Long id, String description, LocalDateTime created) {
         this.id = id;

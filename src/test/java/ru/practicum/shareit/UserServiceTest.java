@@ -1,6 +1,7 @@
 package ru.practicum.shareit;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
@@ -18,16 +19,19 @@ import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
 public class UserServiceTest {
-    @Mock
-    UserMapper userMapper;
+
     @Mock
     UserRepository userRepository;
 
-    @InjectMocks
     UserServiceImpl userService;
 
     @Captor
     ArgumentCaptor<User> userArgumentCaptor;
+
+    @BeforeEach
+    public void createServiceAndMock() {
+        this.userService = new UserServiceImpl(userRepository, new UserMapper());
+    }
 
     @Test
     public void shouldCreateUserStandardCase() {
@@ -37,9 +41,7 @@ public class UserServiceTest {
         user.setName("name");
         user.setEmail("email@email.com");
 
-        Mockito.when(userMapper.toUser(expected)).thenReturn(user);
         Mockito.when(userRepository.save(user)).thenReturn(user);
-        Mockito.when(userMapper.toUserDto(user)).thenReturn(expected);
 
         UserDto actual = userService.create(expected);
 
@@ -59,7 +61,6 @@ public class UserServiceTest {
         user.setName("name");
         user.setEmail("email@email.com");
 
-        Mockito.when(userMapper.toUser(expected)).thenReturn(user);
         Mockito.when(userRepository.save(user)).thenThrow(new RuntimeException());
 
         InvalidEmailException exp =
@@ -77,7 +78,7 @@ public class UserServiceTest {
 
         Assertions.assertThrows(UserNotFoundException.class,
             () -> userService.update(0L, userDto));
-        Mockito.verify(userMapper, Mockito.never()).toUser(userDto);
+
         Mockito.verify(userRepository, Mockito.never()).save(user);
     }
 
@@ -94,7 +95,6 @@ public class UserServiceTest {
         newUser.setEmail("notuniqueemail@email.com");
 
         Mockito.when(userRepository.findById(1L)).thenReturn(Optional.of(oldUser));
-        Mockito.when(userMapper.toUser(userDto)).thenReturn(newUser);
         Mockito.when(userRepository.findByEmail(newUser.getEmail())).thenReturn(new User());
 
         Assertions.assertThrows(InvalidEmailException.class, () -> userService.update(1L, userDto));
@@ -113,7 +113,7 @@ public class UserServiceTest {
         newUser.setEmail("new@email.com");
 
         Mockito.when(userRepository.findById(1L)).thenReturn(Optional.of(oldUser));
-        Mockito.when(userMapper.toUser(userDto)).thenReturn(newUser);
+        Mockito.when(userRepository.save(Mockito.any())).thenReturn(newUser);
 
         userService.update(1L, userDto);
 
@@ -138,7 +138,7 @@ public class UserServiceTest {
         newUser.setName("new name");
 
         Mockito.when(userRepository.findById(1L)).thenReturn(Optional.of(oldUser));
-        Mockito.when(userMapper.toUser(userDto)).thenReturn(newUser);
+        Mockito.when(userRepository.save(Mockito.any())).thenReturn(newUser);
 
         userService.update(1L, userDto);
 
@@ -157,7 +157,6 @@ public class UserServiceTest {
         UserDto expected = new UserDto();
 
         Mockito.when(userRepository.findById(id)).thenReturn(Optional.of(user));
-        Mockito.when(userMapper.toUserDto(user)).thenReturn(expected);
 
         UserDto actual = userService.read(id);
 
@@ -183,7 +182,7 @@ public class UserServiceTest {
     @Test
     public void shouldReadAllStandardCase() {
         List<UserDto> expected = List.of(new UserDto());
-        Mockito.when(userMapper.listToUserDto(Mockito.anyList())).thenReturn(expected);
+        Mockito.when(userRepository.findAll()).thenReturn(List.of(new User()));
 
         List<UserDto> actual = userService.readAll();
         Assertions.assertEquals(expected, actual);
@@ -203,7 +202,7 @@ public class UserServiceTest {
         newUser.setEmail("email@email.com");
 
         Mockito.when(userRepository.findById(1L)).thenReturn(Optional.of(oldUser));
-        Mockito.when(userMapper.toUser(userDto)).thenReturn(newUser);
+        Mockito.when(userRepository.save(Mockito.any())).thenReturn(newUser);
 
         userService.update(1L, userDto);
 

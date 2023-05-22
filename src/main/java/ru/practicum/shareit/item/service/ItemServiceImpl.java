@@ -6,6 +6,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.shareit.PaginationParamException;
 import ru.practicum.shareit.booking.dto.BookingView;
 import ru.practicum.shareit.booking.exception.BookingOwnerCreateException;
 import ru.practicum.shareit.booking.model.Booking;
@@ -117,12 +118,7 @@ public class ItemServiceImpl implements ItemService {
     public List<ItemDto> readAllByUserId(Long userId, Integer from, Integer size) {
         LocalDateTime now = LocalDateTime.now();
         userService.checkUser(userId);
-        Pageable pageRequest;
-        if (from == null && size == null) {
-            pageRequest = Pageable.unpaged();
-        } else {
-            pageRequest = PageRequest.of(from != null ? from / size : 0, size);
-        }
+        Pageable pageRequest = setPageRequest(from, size);
         Page<Item> pageItems = itemRepository.findItemsByOwnerOrderByIdAsc(userId, pageRequest);
         List<Item> items = pageItems.getContent();
         List<Booking> bookingsLast = bookingService.findAllLastBookingForItems(items, BookingStatuses.APPROVED, now);
@@ -162,12 +158,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public List<ItemDto> searchItems(String text, Integer from, Integer size) {
-        Pageable pageRequest;
-        if (from == null && size == null) {
-            pageRequest = Pageable.unpaged();
-        } else {
-            pageRequest = PageRequest.of(from != null ? from / size : 0, size);
-        }
+        Pageable pageRequest = setPageRequest(from, size);
         if (text.isEmpty()) {
             log.warn("search request was empty");
             return List.of();
@@ -240,5 +231,16 @@ public class ItemServiceImpl implements ItemService {
 
     private Boolean isUserItemOwner(Long userId, Long itemId) {
         return checkItem(itemId).getOwner().equals(userId);
+    }
+
+    private Pageable setPageRequest(Integer from, Integer size) {
+        if (from == null && size == null) {
+            return Pageable.unpaged();
+        } else if (from == null || size == null) {
+            log.error("Pagination parameters from = {}, size = {} are not allowed", from, size);
+            throw new PaginationParamException(from, size);
+        } else {
+            return PageRequest.of(from > 0 ? from / size : 0, size);
+        }
     }
 }

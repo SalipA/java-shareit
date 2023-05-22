@@ -1,9 +1,9 @@
 package ru.practicum.shareit;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -37,10 +37,13 @@ public class BookingServiceTest {
     UserService userService;
     @Mock
     ItemService itemService;
-    @Mock
-    BookingMapper bookingMapper;
-    @InjectMocks
+
     BookingServiceImpl bookingService;
+
+    @BeforeEach
+    public void createServiceAndMocks() {
+        this.bookingService = new BookingServiceImpl(bookingRepository,userService, itemService, new BookingMapper());
+    }
 
     @Test
     public void shouldCreateBookingStandardCase() {
@@ -49,21 +52,28 @@ public class BookingServiceTest {
         bookingDto.setStart(LocalDateTime.of(2023, 1, 1, 1, 1, 1));
         bookingDto.setEnd(LocalDateTime.of(2023, 1, 2, 2, 2, 2));
 
+        User user = new User();
+        user.setId(1L);
+
+        Item item = new Item();
+        item.setId(1L);
+        item.setName("name");
+
         Booking booking = new Booking();
         booking.setId(1L);
         booking.setStart(LocalDateTime.of(2023, 1, 1, 1, 1, 1));
         booking.setEnd(LocalDateTime.of(2023, 1, 2, 2, 2, 2));
         booking.setStatus(BookingStatuses.WAITING);
+        booking.setItem(item);
+        booking.setBooker(user);
 
-
-        Mockito.when(bookingMapper.toBooking(Mockito.any())).thenReturn(booking);
-        Mockito.when(userService.checkUser(Mockito.anyLong())).thenReturn(new User());
-        Mockito.when(itemService.checkItemIsAvailableForBooking(Mockito.anyLong(), Mockito.anyLong())).thenReturn(new Item());
+        Mockito.when(userService.checkUser(Mockito.anyLong())).thenReturn(user);
+        Mockito.when(itemService.checkItemIsAvailableForBooking(Mockito.anyLong(), Mockito.anyLong())).thenReturn(item);
         Mockito.when(bookingRepository.save(Mockito.any())).thenReturn(booking);
 
         BookingDto actual = bookingService.create(1L, bookingDto);
 
-        Mockito.verify(bookingRepository, Mockito.times(1)).save(booking);
+        Mockito.verify(bookingRepository, Mockito.times(1)).save(Mockito.any());
         Assertions.assertEquals(BookingStatuses.WAITING, actual.getStatus());
         Assertions.assertEquals(booking.getStart(), actual.getStart());
         Assertions.assertEquals(booking.getEnd(), actual.getEnd());

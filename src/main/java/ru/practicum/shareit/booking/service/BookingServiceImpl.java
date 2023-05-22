@@ -7,6 +7,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.shareit.PaginationParamException;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.exception.*;
 import ru.practicum.shareit.booking.model.Booking;
@@ -208,8 +209,11 @@ public class BookingServiceImpl implements BookingService {
     private Pageable setPageRequest(Integer from, Integer size) {
         if (from == null && size == null) {
             return Pageable.unpaged();
+        } else if (from == null || size == null) {
+            log.error("Pagination parameters from = {}, size = {} are not allowed", from, size);
+            throw new PaginationParamException(from, size);
         } else {
-            return PageRequest.of(from != null ? from / size : 0, size);
+            return PageRequest.of(from > 0 ? from / size : 0, size);
         }
     }
 }

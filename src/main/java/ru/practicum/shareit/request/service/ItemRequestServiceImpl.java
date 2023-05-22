@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.shareit.PaginationParamException;
 import ru.practicum.shareit.request.dto.ItemRequestDto;
 import ru.practicum.shareit.request.exception.RequestNotFoundException;
 import ru.practicum.shareit.request.model.ItemRequest;
@@ -79,8 +80,11 @@ public class ItemRequestServiceImpl implements ItemRequestService {
         Pageable pageRequest;
         if (from == null && size == null) {
             pageRequest = Pageable.unpaged();
+        } else if (from == null || size == null) {
+            log.error("Pagination parameters from = {}, size = {} are not allowed", from, size);
+            throw new PaginationParamException(from, size);
         } else {
-            pageRequest = PageRequest.of(from != null ? from / size : 0, size, Sort.by(Sort.Order.desc("created")));
+            pageRequest = PageRequest.of(from > 0 ? from / size : 0, size, Sort.by(Sort.Order.desc("created")));
         }
         Page<ItemRequest> page = itemRequestRepository.findAllByRequestor_IdIsNot(userId, pageRequest);
         return page.map(ItemRequestMapper::toItemRequestDto).getContent();
