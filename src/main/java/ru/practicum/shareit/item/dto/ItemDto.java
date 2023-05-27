@@ -26,15 +26,13 @@ public class ItemDto {
     private BookingView lastBooking;
     private BookingView nextBooking;
     private List<CommentDto> comments;
+    private Long requestId;
 
-    public ItemDto(Long id, String name, String description, Boolean available) {
+    public ItemDto(Long id, String name, String description, Boolean available, Long requestId) {
         this.id = id;
         this.name = name;
         this.description = description;
         this.available = available;
-    }
-
-    public void addComment(CommentDto commentDto) {
-        comments.add(commentDto);
+        this.requestId = requestId;
     }
 }

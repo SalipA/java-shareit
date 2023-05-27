@@ -16,9 +16,9 @@ public interface BookingService {
 
     BookingDto approveBooking(Long userId, Long bookingId, Boolean approved);
 
-    List<BookingDto> getAllByState(Long userId, States state);
+    List<BookingDto> getAllByState(Long userId, States state, Integer from, Integer size);
 
-    List<BookingDto> getAllByOwnerAndState(Long userId, States state);
+    List<BookingDto> getAllByOwnerAndState(Long userId, States state, Integer from, Integer size);
 
     Optional<Booking> findNextBookingForItem(Long itemId, BookingStatuses status, LocalDateTime dateTime);
 

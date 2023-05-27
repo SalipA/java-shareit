@@ -1,6 +1,7 @@
 package ru.practicum.shareit.booking.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.lang.Nullable;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.booking.annotation.BookingStartEndTimeConstraint;
@@ -9,6 +10,7 @@ import ru.practicum.shareit.booking.service.BookingService;
 import ru.practicum.shareit.booking.service.States;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import java.util.List;
 
@@ -48,21 +50,25 @@ public class BookingController {
 
     @GetMapping
     public List<BookingDto> getAllByState(@RequestHeader("X-Sharer-User-Id") Long userId,
-                                          @RequestParam(required = false) States state) {
+                                          @RequestParam(required = false) States state, @RequestParam(required =
+        false) @Nullable @Min(0) Integer from, @RequestParam(required = false) @Nullable @Min(1) Integer size) {
         if (state == null) {
             state = States.ALL;
         }
-        log.info("GET: /bookings, userId = {}, state = {}", userId, state);
-        return bookingService.getAllByState(userId, state);
+        log.info("GET: /bookings, userId = {}, state = {}, pagination: from {} size {}", userId, state, from,
+            size);
+        return bookingService.getAllByState(userId, state, from, size);
     }
 
     @GetMapping("/owner")
     public List<BookingDto> getAllByOwnerAndState(@RequestHeader("X-Sharer-User-Id") Long userId,
-                                                  @RequestParam(required = false) States state) {
+                                                  @RequestParam(required = false) States state, @RequestParam(required =
+        false) @Nullable @Min(0) Integer from, @RequestParam(required = false) @Nullable @Min(1) Integer size) {
         if (state == null) {
             state = States.ALL;
         }
-        log.info("GET: /bookings/owner, userId = {}, state = {}", userId, state);
-        return bookingService.getAllByOwnerAndState(userId, state);
+        log.info("GET: /bookings/owner, userId = {}, state = {}, pagination: from {} size {}", userId, state, from,
+            size);
+        return bookingService.getAllByOwnerAndState(userId, state, from, size);
     }
 }

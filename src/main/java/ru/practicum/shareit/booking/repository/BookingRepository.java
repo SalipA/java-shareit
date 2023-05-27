@@ -1,5 +1,7 @@
 package ru.practicum.shareit.booking.repository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -16,34 +18,42 @@ import java.util.Optional;
 
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Long> {
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Transactional
     @Query("update Booking b set b.status = :status where b.id = :id")
     void updateBookingStatus(@Param(value = "id") Long id, @Param(value = "status") BookingStatuses bookingStatuses);
 
-    List<Booking> findAllByBooker_IdOrderByStartDesc(Long bookerId);
+    Page<Booking> findAllByBooker_IdOrderByStartDesc(Long bookerId, Pageable pageable);
 
-    List<Booking> findAllByBooker_IdAndStartAfterOrderByStartDesc(Long bookerId, LocalDateTime dateTime);
+    Page<Booking> findAllByBooker_IdAndStartAfterOrderByStartDesc(Long bookerId, LocalDateTime dateTime, Pageable
+        pageable);
 
-    List<Booking> findAllByBooker_IdAndEndBeforeOrderByStartDesc(Long bookerId, LocalDateTime dateTime);
+    Page<Booking> findAllByBooker_IdAndEndBeforeOrderByStartDesc(Long bookerId, LocalDateTime dateTime, Pageable
+        pageable);
 
-    List<Booking> findAllByBooker_IdAndStartBeforeAndEndAfterOrderByStartDesc(Long bookerId,
+    Page<Booking> findAllByBooker_IdAndStartBeforeAndEndAfterOrderByStartDesc(Long bookerId,
                                                                               LocalDateTime startDateTime,
-                                                                              LocalDateTime endDateTime);
+                                                                              LocalDateTime endDateTime, Pageable
+                                                                                  pageable);
 
-    List<Booking> findAllByBooker_IdAndStatusOrderByStartDesc(Long bookerId, BookingStatuses bookingStatus);
+    Page<Booking> findAllByBooker_IdAndStatusOrderByStartDesc(Long bookerId, BookingStatuses bookingStatus, Pageable
+        pageable);
 
-    List<Booking> findAllByItemInOrderByStartDesc(List<Item> items);
+    Page<Booking> findAllByItemInOrderByStartDesc(List<Item> items, Pageable pageable);
 
-    List<Booking> findAllByItemInAndStartGreaterThanEqualOrderByStartDesc(List<Item> items, LocalDateTime dateTime);
+    Page<Booking> findAllByItemInAndStartGreaterThanEqualOrderByStartDesc(List<Item> items, LocalDateTime dateTime,
+                                                                          Pageable pageable);
 
-    List<Booking> findAllByItemInAndEndLessThanEqualOrderByStartDesc(List<Item> items, LocalDateTime dateTime);
+    Page<Booking> findAllByItemInAndEndLessThanEqualOrderByStartDesc(List<Item> items, LocalDateTime dateTime,
+                                                                     Pageable pageable);
 
-    List<Booking> findAllByItemInAndStartLessThanEqualAndEndGreaterThanEqualOrderByStartDesc(List<Item> items,
+    Page<Booking> findAllByItemInAndStartLessThanEqualAndEndGreaterThanEqualOrderByStartDesc(List<Item> items,
                                                                                              LocalDateTime startDateTime,
-                                                                                             LocalDateTime endDateTime);
+                                                                                             LocalDateTime endDateTime,
+                                                                                             Pageable pageable);
 
-    List<Booking> findAllByItemInAndStatusOrderByStartDesc(List<Item> items, BookingStatuses bookingStatus);
+    Page<Booking> findAllByItemInAndStatusOrderByStartDesc(List<Item> items, BookingStatuses bookingStatus,
+                                                           Pageable pageable);
 
     Optional<Booking> findFirstByItem_IdAndStatusAndStartIsLessThanEqualOrderByStartDesc(Long itemId,
                                                                                          BookingStatuses status,

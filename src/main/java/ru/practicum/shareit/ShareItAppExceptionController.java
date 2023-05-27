@@ -16,6 +16,8 @@ import ru.practicum.shareit.item.exception.CommentAddAccessException;
 import ru.practicum.shareit.item.exception.ItemBookingAccessException;
 import ru.practicum.shareit.item.exception.ItemEditAccessException;
 import ru.practicum.shareit.item.exception.ItemNotFoundException;
+import ru.practicum.shareit.request.controller.ItemRequestController;
+import ru.practicum.shareit.request.exception.RequestNotFoundException;
 import ru.practicum.shareit.user.controller.UserController;
 import ru.practicum.shareit.user.exception.InvalidEmailException;
 import ru.practicum.shareit.user.exception.UserNotFoundException;
@@ -26,8 +28,22 @@ import java.util.Map;
 import java.util.Objects;
 
 @Slf4j
-@RestControllerAdvice(assignableTypes = {ItemController.class, BookingController.class, UserController.class})
+@RestControllerAdvice(assignableTypes = {ItemController.class, BookingController.class, UserController.class,
+    ItemRequestController.class})
+
 public class ShareItAppExceptionController {
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, String> handlePaginationParamExp(final PaginationParamException exp) {
+        return Map.of("error", exp.getMessage());
+    }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public Map<String, String> handleRequestNotFoundExp(final RequestNotFoundException exp) {
+        return Map.of("error", exp.getMessage());
+    }
 
     @ExceptionHandler
     @ResponseStatus(HttpStatus.NOT_FOUND)

@@ -1,5 +1,6 @@
 package ru.practicum.shareit.item.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
 import javax.persistence.*;
@@ -13,6 +14,7 @@ import javax.persistence.*;
 @Setter
 @NoArgsConstructor
 @ToString
+@EqualsAndHashCode
 public class Item {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,5 +28,6 @@ public class Item {
     @Column(name = "owner_id", nullable = false)
     private Long owner;
     @Column(name = "request_id")
+    @JsonProperty("requestId")
     private Long request;
 }

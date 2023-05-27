@@ -86,7 +86,7 @@ class ShareItTests {
     @Order(7)
     public void shouldCreateItemStandardCase() {
         ItemDto testItemDto = itemService.create(1L, new ItemDto(0L, "тестовая вещь", "большая",
-            true));
+            true, null));
         Assertions.assertEquals(1L, testItemDto.getId());
         Assertions.assertEquals("тестовая вещь", testItemDto.getName());
         Assertions.assertEquals("большая", testItemDto.getDescription());
@@ -97,12 +97,12 @@ class ShareItTests {
     @Order(8)
     public void shouldUpdateItemStandardCase() {
         ItemDto itemNew = new ItemDto(1L, "тестовая вещь измененная", "большая имененная",
-            true);
+            true, null);
         ItemDto itemFromDb = itemService.update(1L, 1L, itemNew);
         Assertions.assertEquals(itemFromDb.getName(), "тестовая вещь измененная");
         Assertions.assertEquals(itemFromDb.getDescription(), "большая имененная");
         Assertions.assertEquals(itemFromDb.getAvailable(), true);
-        Assertions.assertEquals(itemService.readAllByUserId(1L).size(), 1);
+        Assertions.assertEquals(itemService.readAllByUserId(1L, null,null).size(), 1);
     }
 
     @Test
@@ -117,9 +117,9 @@ class ShareItTests {
     @Order(10)
     public void shouldReadAllItemByUserIdStandardCase() {
         ItemDto itemNew = new ItemDto(0L, "вещь большая", "измененная",
-            true);
+            true, null);
         itemService.create(1L, itemNew);
-        List<ItemDto> items = itemService.readAllByUserId(1L);
+        List<ItemDto> items = itemService.readAllByUserId(1L, null,null);
         Assertions.assertEquals(2, items.size());
         Assertions.assertEquals(1L, items.get(0).getId());
         Assertions.assertEquals(2L, items.get(1).getId());
@@ -129,7 +129,7 @@ class ShareItTests {
     @Order(11)
     public void shouldSearchItemStandardCase() {
         String text = "большая";
-        List<ItemDto> items = itemService.searchItems(text);
+        List<ItemDto> items = itemService.searchItems(text, null, null);
         Assertions.assertEquals(2, items.size());
         Assertions.assertEquals(1L, items.get(0).getId());
         Assertions.assertEquals(2L, items.get(1).getId());
@@ -169,7 +169,7 @@ class ShareItTests {
     @Test
     @Order(15)
     public void shouldGetAllByStateStandardCase() {
-        List<BookingDto> bookings = bookingService.getAllByState(3L, States.FUTURE);
+        List<BookingDto> bookings = bookingService.getAllByState(3L, States.FUTURE, null,null);
         Assertions.assertEquals(1, bookings.size());
         Assertions.assertEquals(1L, bookings.get(0).getId());
         Assertions.assertEquals(LocalDateTime.of(2023, 6,
@@ -182,7 +182,7 @@ class ShareItTests {
     @Test
     @Order(16)
     public void shouldGetAllByOwnerAndStateStandardCase() {
-        List<BookingDto> bookings = bookingService.getAllByOwnerAndState(1L, States.ALL);
+        List<BookingDto> bookings = bookingService.getAllByOwnerAndState(1L, States.ALL, null, null);
         Assertions.assertEquals(1, bookings.size());
         Assertions.assertEquals(1L, bookings.get(0).getId());
         Assertions.assertEquals(LocalDateTime.of(2023, 6,
@@ -206,5 +206,68 @@ class ShareItTests {
         ItemDto itemDto = itemService.read(1L, 3L);
         Assertions.assertNull(itemDto.getLastBooking());
         Assertions.assertNull(itemDto.getNextBooking());
+    }
+
+    @Test
+    @Order(19)
+    public void shouldGetAllByStateBookingFrom2SizeNullCase() {
+        PaginationParamException exp = Assertions.assertThrows(PaginationParamException.class,
+            () -> bookingService.getAllByState(3L,
+                States.FUTURE, 2, null));
+        Assertions.assertEquals("Не возможно обработать запрос с переданными параметрами пагинации: from = 2," +
+            " size = " + "null", exp.getMessage());
+    }
+
+    @Test
+    @Order(20)
+    public void shouldSearchItemFromNullSize2Case() {
+        String text = "большая";
+        PaginationParamException exp = Assertions.assertThrows(PaginationParamException.class,
+            () -> itemService.searchItems(text, null, 2));
+        Assertions.assertEquals("Не возможно обработать запрос с переданными параметрами пагинации: from = null, size" +
+            " = 2", exp.getMessage());
+    }
+
+    @Test
+    @Order(21)
+    public void shouldSearchItemFromN2SizeNullCase() {
+        String text = "большая";
+        PaginationParamException exp = Assertions.assertThrows(PaginationParamException.class,
+            () -> itemService.searchItems(text, 2, null));
+        Assertions.assertEquals("Не возможно обработать запрос с переданными параметрами пагинации: from = 2, size" +
+            " = null", exp.getMessage());
+    }
+
+    @Test
+    @Order(22)
+    public void shouldGetAllByStateBookingFromNullSize2Case() {
+        PaginationParamException exp = Assertions.assertThrows(PaginationParamException.class,
+            () -> bookingService.getAllByState(3L,
+                States.FUTURE, null, 2));
+        Assertions.assertEquals("Не возможно обработать запрос с переданными параметрами пагинации: from = null," +
+            " size = " + "2", exp.getMessage());
+    }
+
+    @Test
+    @Order(23)
+    public void shouldGetAllByStateBookingFrom0Size2Case() {
+        List<BookingDto> bookings = bookingService.getAllByState(3L, States.FUTURE, 0, 2);
+        Assertions.assertEquals(1, bookings.size());
+        Assertions.assertEquals(1L, bookings.get(0).getId());
+        Assertions.assertEquals(LocalDateTime.of(2023, 6,
+            7, 10, 10, 10), bookings.get(0).getStart());
+        Assertions.assertEquals(LocalDateTime.of(2023, 6,
+            7, 20, 10, 10), bookings.get(0).getEnd());
+        Assertions.assertEquals(BookingStatuses.APPROVED, bookings.get(0).getStatus());
+    }
+
+    @Test
+    @Order(24)
+    public void shouldSearchItemFrom0Size2Case() {
+        String text = "большая";
+        List<ItemDto> items = itemService.searchItems(text, 0, 2);
+        Assertions.assertEquals(2, items.size());
+        Assertions.assertEquals(1L, items.get(0).getId());
+        Assertions.assertEquals(2L, items.get(1).getId());
     }
 }
