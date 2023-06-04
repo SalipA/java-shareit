@@ -37,12 +37,6 @@ import java.util.Objects;
 public class ShareItAppExceptionController {
 
     @ExceptionHandler
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, String> handlePaginationParamExp(final PaginationParamException exp) {
-        return Map.of("error", exp.getMessage());
-    }
-
-    @ExceptionHandler
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public Map<String, String> handleRequestNotFoundExp(final RequestNotFoundException exp) {
         return Map.of("error", exp.getMessage());

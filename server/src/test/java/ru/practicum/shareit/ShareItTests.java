@@ -210,46 +210,6 @@ class ShareItTests {
 
     @Test
     @Order(19)
-    public void shouldGetAllByStateBookingFrom2SizeNullCase() {
-        PaginationParamException exp = Assertions.assertThrows(PaginationParamException.class,
-            () -> bookingService.getAllByState(3L,
-                States.FUTURE, 2, null));
-        Assertions.assertEquals("Не возможно обработать запрос с переданными параметрами пагинации: from = 2," +
-            " size = " + "null", exp.getMessage());
-    }
-
-    @Test
-    @Order(20)
-    public void shouldSearchItemFromNullSize2Case() {
-        String text = "большая";
-        PaginationParamException exp = Assertions.assertThrows(PaginationParamException.class,
-            () -> itemService.searchItems(text, null, 2));
-        Assertions.assertEquals("Не возможно обработать запрос с переданными параметрами пагинации: from = null, size" +
-            " = 2", exp.getMessage());
-    }
-
-    @Test
-    @Order(21)
-    public void shouldSearchItemFromN2SizeNullCase() {
-        String text = "большая";
-        PaginationParamException exp = Assertions.assertThrows(PaginationParamException.class,
-            () -> itemService.searchItems(text, 2, null));
-        Assertions.assertEquals("Не возможно обработать запрос с переданными параметрами пагинации: from = 2, size" +
-            " = null", exp.getMessage());
-    }
-
-    @Test
-    @Order(22)
-    public void shouldGetAllByStateBookingFromNullSize2Case() {
-        PaginationParamException exp = Assertions.assertThrows(PaginationParamException.class,
-            () -> bookingService.getAllByState(3L,
-                States.FUTURE, null, 2));
-        Assertions.assertEquals("Не возможно обработать запрос с переданными параметрами пагинации: from = null," +
-            " size = " + "2", exp.getMessage());
-    }
-
-    @Test
-    @Order(23)
     public void shouldGetAllByStateBookingFrom0Size2Case() {
         List<BookingDto> bookings = bookingService.getAllByState(3L, States.FUTURE, 0, 2);
         Assertions.assertEquals(1, bookings.size());
@@ -262,7 +222,7 @@ class ShareItTests {
     }
 
     @Test
-    @Order(24)
+    @Order(20)
     public void shouldSearchItemFrom0Size2Case() {
         String text = "большая";
         List<ItemDto> items = itemService.searchItems(text, 0, 2);
