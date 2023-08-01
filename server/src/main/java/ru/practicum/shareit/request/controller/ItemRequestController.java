@@ -19,7 +19,6 @@ public class ItemRequestController {
     public ItemRequestController(ItemRequestService itemRequestService) {
         this.itemRequestService = itemRequestService;
     }
-
     @PostMapping
     public ItemRequestDto create(@RequestHeader("X-Sharer-User-Id") Long userId,
                                   @RequestBody ItemRequestDto itemRequestDto) {

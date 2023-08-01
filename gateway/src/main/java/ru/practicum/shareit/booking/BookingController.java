@@ -1,5 +1,7 @@
 package ru.practicum.shareit.booking;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -17,16 +19,24 @@ import javax.validation.constraints.NotNull;
 @RequiredArgsConstructor
 @Slf4j
 @Validated
+@Tag(name = "Бронирования", description = "Операции для работы с заявками на бронь вещи")
 public class BookingController {
     private final BookingClient bookingClient;
-
+    @Operation(
+        summary = "Создание заявки на бронирование вещи",
+        description = "Позволяет пользователю создать заявку на бронирование вещи"
+    )
     @PostMapping
     public ResponseEntity<Object> create(@RequestHeader(name = "X-Sharer-User-Id") Long userId,
                                          @Valid @RequestBody @BookingStartEndTimeConstraint BookingDto bookingDto) {
         log.info("POST: /bookings, userId = {}, value = {}", userId, bookingDto);
         return bookingClient.create(userId, bookingDto);
     }
-
+    @Operation(
+        summary = "Получение информации о бронировании",
+        description = "Позволяет пользователю, создавшему заявку на бронирование, и владельцу вещи получить " +
+            "информацию о бронировании "
+    )
     @GetMapping("/{bookingId}")
     public ResponseEntity<Object> read(@RequestHeader(name = "X-Sharer-User-Id") Long userId,
                                        @PathVariable Long bookingId) {
@@ -34,6 +44,10 @@ public class BookingController {
         return bookingClient.read(userId, bookingId);
     }
 
+    @Operation(
+        summary = "Изменения статуса бронирования владельцем вещи",
+        description = "Позволяет владельцу одобрять или отклонять пользовательские запросы на бронирование вещей"
+    )
     @PatchMapping("/{bookingId}")
     public ResponseEntity<Object> approveBooking(@RequestHeader(name = "X-Sharer-User-Id") Long userId,
                                                  @PathVariable Long bookingId,
@@ -41,7 +55,10 @@ public class BookingController {
         log.info("PATCH: /bookings/{}, userId = {}", bookingId, userId);
         return bookingClient.approveBooking(userId, bookingId, Boolean.toString(approved));
     }
-
+    @Operation(
+        summary = "Получение списка бронирований пользователем",
+        description = "Позволяет пользователю получить список своих бронирований"
+    )
     @GetMapping
     public ResponseEntity<Object> getAllByState(@RequestHeader(name = "X-Sharer-User-Id") Long userId,
                                                 @RequestParam(required = false) States state, @RequestParam(required =
@@ -53,7 +70,10 @@ public class BookingController {
             size);
         return bookingClient.getAllByState(userId, state.toString(), from, size);
     }
-
+    @Operation(
+        summary = "Получение списка бронирований владельцем вещи",
+        description = "Позволяет владельцу вещи получить список ее бронирований"
+    )
     @GetMapping("/owner")
     public ResponseEntity<Object> getAllByOwnerAndState(@RequestHeader(name = "X-Sharer-User-Id") Long userId,
                                                         @RequestParam(required = false) States state, @RequestParam(required =
