@@ -33,6 +33,8 @@ Technologies were used:
 
 Learn more information about endpoints and provided JSON - objects in project [documentation](shareIt-spec.json)
 
+<span style="color: red;">!</span> *docs are under development, check progress [here](https://github.com/SalipA/java-shareit/blob/add-docs/shareIt-spec.json)*
+
 ### About Entity-Relationship model 
 ![Postgres](https://img.shields.io/badge/postgres-%23316192.svg?style=for-the-badge&logo=postgresql&logoColor=white)
 ![Hibernate](https://img.shields.io/badge/Hibernate-59666C?style=for-the-badge&logo=Hibernate&logoColor=white)
