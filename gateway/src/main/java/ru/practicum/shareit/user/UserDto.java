@@ -12,7 +12,7 @@ import javax.validation.constraints.NotBlank;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "Сущность пользователя")
+@Schema(description = "Пользователь")
 public class UserDto {
     @Schema(description = "id пользователя", accessMode = Schema.AccessMode.READ_ONLY, example = "1")
     private Long id;
