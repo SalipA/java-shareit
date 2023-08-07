@@ -22,6 +22,7 @@ public class ItemRequestController {
     public ItemRequestController(ItemRequestClient itemRequestClient) {
         this.itemRequestClient = itemRequestClient;
     }
+
     @Operation(
         summary = "Создания предзаказа на вещь",
         description = "Позволяет пользователю оставлять предзаказ на вещь, которую еще никто не добавил"
@@ -32,6 +33,7 @@ public class ItemRequestController {
         log.info("POST: /requests, userId = {}, value = {}", userId, itemRequestDto);
         return itemRequestClient.create(userId, itemRequestDto);
     }
+
     @Operation(
         summary = "Получение информации о предзаказе на вещь",
         description = "Позволяет пользователям получать информацию о предзаказе на вещь"
@@ -41,6 +43,7 @@ public class ItemRequestController {
         log.info("GET: /requests/{}, userId = {}", requestId, userId);
         return itemRequestClient.read(userId, requestId);
     }
+
     @Operation(
         summary = "Получение списка предзаказов пользователя",
         description = "Позволяет пользователю получать список своих предзаказе на вещи"
@@ -50,6 +53,7 @@ public class ItemRequestController {
         log.info("GET: /requests, userId = {}", userId);
         return itemRequestClient.getAllByUserId(userId);
     }
+
     @Operation(
         summary = "Получение списка всех предзаказов",
         description = "Позволяет пользователю получать список предзаказов на вещи, созданных другими пользователями"
