@@ -1,15 +1,1383 @@
 {
-  "openapi": "3.0.3",
+  "openapi": "3.0.1",
   "info": {
-    "title": "Title",
-    "description": "Title",
+    "title": "ShareIt",
+    "description": "Sharing service API",
     "version": "1.0.0"
   },
   "servers": [
     {
-      "url": "https"
+      "url": "http://localhost:8080",
+      "description": "Generated server url"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Бронирования",
+      "description": "Операции для работы с заявками на бронь вещи"
+    },
+    {
+      "name": "Пользователи",
+      "description": "Операции для работы с пользователями"
+    },
+    {
+      "name": "Вещи",
+      "description": "Операции для работы с вещами"
+    },
+    {
+      "name": "Заявки",
+      "description": "Операции для работы с предзаказами на вещи"
     }
   ],
   "paths": {
+    "/users": {
+      "get": {
+        "tags": [
+          "Пользователи"
+        ],
+        "summary": "Получение данных о всех пользователях сервиса",
+        "description": "Позволяет получить список пользователей сервиса",
+        "operationId": "readAll",
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Пользователи"
+        ],
+        "summary": "Регистрация пользователя",
+        "description": "Позволяет зарегистрировать пользователя",
+        "operationId": "create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Email должен иметь формат адреса электронной почты"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/requests": {
+      "get": {
+        "tags": [
+          "Заявки"
+        ],
+        "summary": "Получение списка предзаказов пользователя",
+        "description": "Позволяет пользователю получать список своих предзаказе на вещи",
+        "operationId": "getAllByUserId",
+        "parameters": [
+          {
+            "name": "X-Sharer-User-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Заявки"
+        ],
+        "summary": "Создания предзаказа на вещь",
+        "description": "Позволяет пользователю оставлять предзаказ на вещь, которую еще никто не добавил",
+        "operationId": "create_1",
+        "parameters": [
+          {
+            "name": "X-Sharer-User-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ItemRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/items": {
+      "get": {
+        "tags": [
+          "Вещи"
+        ],
+        "summary": "Получение списка вещей пользователя",
+        "description": "Позволяет владельцу получить информацию о своих вещах",
+        "operationId": "readAllByUserId",
+        "parameters": [
+          {
+            "name": "X-Sharer-User-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Вещи"
+        ],
+        "summary": "Добавление вещи пользователем",
+        "description": "Позволяет пользователю добавить вещь",
+        "operationId": "create_2",
+        "parameters": [
+          {
+            "name": "X-Sharer-User-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ItemDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/items/{itemId}/comment": {
+      "post": {
+        "tags": [
+          "Вещи"
+        ],
+        "summary": "Добавление комментария к вещи",
+        "description": "Позволяет пользователю оставлять отзывы о вещах после завершения бронирования",
+        "operationId": "createComment",
+        "parameters": [
+          {
+            "name": "X-Sharer-User-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bookings": {
+      "get": {
+        "tags": [
+          "Бронирования"
+        ],
+        "summary": "Получение списка бронирований пользователем",
+        "description": "Позволяет пользователю получить список своих бронирований",
+        "operationId": "getAllByState",
+        "parameters": [
+          {
+            "name": "X-Sharer-User-Id",
+            "in": "header",
+            "description": "id аутентифицированного пользователя сервиса",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "description": "статус бронирования",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ALL",
+                "CURRENT",
+                "PAST",
+                "FUTURE",
+                "WAITING",
+                "REJECTED"
+              ]
+            },
+            "example": "FUTURE"
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "description": "номер страницы, с которой начинается вывод результатов",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 2
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "количество элементов настранице",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 3
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Unknown state: NEW"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BookingDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Бронирования"
+        ],
+        "summary": "Создание заявки на бронирование вещи",
+        "description": "Позволяет пользователю создать заявку на бронирование вещи",
+        "operationId": "create_3",
+        "parameters": [
+          {
+            "name": "X-Sharer-User-Id",
+            "in": "header",
+            "description": "id аутентифицированного пользователя сервиса",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BookingDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Дата начала аренды должна быть текущей или в будущем"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{userId}": {
+      "get": {
+        "tags": [
+          "Пользователи"
+        ],
+        "summary": "Получение данных пользователя",
+        "description": "Позволяет получить данные о пользователе по его id",
+        "operationId": "read",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Пользователи"
+        ],
+        "summary": "Удаление пользователя",
+        "description": "Позволяет удалить пользователя",
+        "operationId": "delete",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Пользователи"
+        ],
+        "summary": "Изменение данных пользователя",
+        "description": "Позволяет изменить имя пользователя и/или его email",
+        "operationId": "update",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "id пользователя",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/items/{itemId}": {
+      "get": {
+        "tags": [
+          "Вещи"
+        ],
+        "summary": "Получение информации о вещи",
+        "description": "Позволяет пользователю получить информацию о вещи",
+        "operationId": "read_2",
+        "parameters": [
+          {
+            "name": "X-Sharer-User-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Вещи"
+        ],
+        "summary": "Изменение информации о вещи пользователем",
+        "description": "Позволяет пользователю изменить информацию о вещи",
+        "operationId": "update_1",
+        "parameters": [
+          {
+            "name": "X-Sharer-User-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ItemDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bookings/{bookingId}": {
+      "get": {
+        "tags": [
+          "Бронирования"
+        ],
+        "summary": "Получение информации о бронировании",
+        "description": "Позволяет пользователю, создавшему заявку на бронирование, и владельцу вещи получить информацию о бронировании ",
+        "operationId": "read_3",
+        "parameters": [
+          {
+            "name": "X-Sharer-User-Id",
+            "in": "header",
+            "description": "id аутентифицированного пользователя сервиса",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          },
+          {
+            "name": "bookingId",
+            "in": "path",
+            "description": "id бронирования",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 2
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "У пользователя userId = 1 нет прав для просмотра информации о бронировании bookingId =2"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Бронирование с bookingId = 1 не найдено!"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Бронирования"
+        ],
+        "summary": "Изменения статуса бронирования владельцем вещи",
+        "description": "Позволяет владельцу одобрять или отклонять пользовательские запросы на бронирование вещей",
+        "operationId": "approveBooking",
+        "parameters": [
+          {
+            "name": "X-Sharer-User-Id",
+            "in": "header",
+            "description": "id аутентифицированного пользователя сервиса, владельца вещи",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          },
+          {
+            "name": "bookingId",
+            "in": "path",
+            "description": "id бронирования",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 2
+          },
+          {
+            "name": "approved",
+            "in": "query",
+            "description": "true - подтверждается владельцем, false - отклоняется владельцем",
+            "required": true,
+            "schema": {
+              "type": "boolean"
+            },
+            "example": false
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Статус бронирования bookingId = 2 уже был изменен"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Бронирование с bookingId = 2 не найдено!"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/requests/{requestId}": {
+      "get": {
+        "tags": [
+          "Заявки"
+        ],
+        "summary": "Получение информации о предзаказе на вещь",
+        "description": "Позволяет пользователям получать информацию о предзаказе на вещь",
+        "operationId": "read_1",
+        "parameters": [
+          {
+            "name": "X-Sharer-User-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "requestId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/requests/all": {
+      "get": {
+        "tags": [
+          "Заявки"
+        ],
+        "summary": "Получение списка всех предзаказов",
+        "description": "Позволяет пользователю получать список предзаказов на вещи, созданных другими пользователями",
+        "operationId": "getAllRequestsWithPagination",
+        "parameters": [
+          {
+            "name": "X-Sharer-User-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/items/search": {
+      "get": {
+        "tags": [
+          "Вещи"
+        ],
+        "summary": "Получение списка вещей по поисковому запросу",
+        "description": "Позволяет пользователю осуществлять поиск вещей по названию и описанию",
+        "operationId": "searchItems",
+        "parameters": [
+          {
+            "name": "text",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bookings/owner": {
+      "get": {
+        "tags": [
+          "Бронирования"
+        ],
+        "summary": "Получение списка бронирований владельцем вещи",
+        "description": "Позволяет владельцу вещи получить список ее бронирований",
+        "operationId": "getAllByOwnerAndState",
+        "parameters": [
+          {
+            "name": "X-Sharer-User-Id",
+            "in": "header",
+            "description": "id аутентифицированного пользователя сервиса, владельца вещи",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 1
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "description": "статус бронирования",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ALL",
+                "CURRENT",
+                "PAST",
+                "FUTURE",
+                "WAITING",
+                "REJECTED"
+              ]
+            },
+            "example": "FUTURE"
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "description": "номер страницы, с которой начинается вывод результатов",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 2
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "количество элементов на странице",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "format": "int32"
+            },
+            "example": 3
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "example": {
+                  "error": "Не возможно обработать запрос с переданными параметрами пагинации: from = 0, size = null"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BookingDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "UserDto": {
+        "required": [
+          "email",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "id пользователя",
+            "format": "int64",
+            "readOnly": true,
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "description": "имя пользователя",
+            "example": "Иван"
+          },
+          "email": {
+            "type": "string",
+            "description": "email пользователя",
+            "example": "ivan@mail.ru"
+          }
+        },
+        "description": "Сущность пользователя"
+      },
+      "ItemRequestDto": {
+        "required": [
+          "description"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "id предзаказа",
+            "format": "int64",
+            "readOnly": true,
+            "example": 1
+          },
+          "description": {
+            "type": "string",
+            "description": "описание предзаказа",
+            "example": "с удовольствием взял бы макбук"
+          },
+          "created": {
+            "type": "string",
+            "description": "дата создания запроса",
+            "format": "date-time",
+            "readOnly": true
+          }
+        },
+        "description": "Предзаказ на добавление вещи"
+      },
+      "ItemDto": {
+        "required": [
+          "available",
+          "description",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "id вещи",
+            "format": "int64",
+            "readOnly": true,
+            "example": 1
+          },
+          "name": {
+            "type": "string",
+            "description": "название вещи",
+            "example": "ноутбук"
+          },
+          "description": {
+            "type": "string",
+            "description": "описание вещи",
+            "example": "Apple MacBook Air 2023 pink gold"
+          },
+          "available": {
+            "type": "boolean",
+            "description": "доступность аренды",
+            "example": true
+          },
+          "requestId": {
+            "type": "integer",
+            "description": "id предзаказа на вещь",
+            "format": "int64",
+            "example": 1
+          }
+        },
+        "description": "Вещь"
+      },
+      "CommentDto": {
+        "required": [
+          "text"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "id комментария",
+            "format": "int64",
+            "readOnly": true,
+            "example": 1
+          },
+          "text": {
+            "maxLength": 512,
+            "minLength": 0,
+            "type": "string",
+            "description": "текст комметария",
+            "example": "Макбук бесподобный! Спасибо владельцу"
+          },
+          "authorName": {
+            "type": "string",
+            "description": "имя автора",
+            "readOnly": true,
+            "example": "Максим"
+          },
+          "created": {
+            "type": "string",
+            "description": "дата создания комментария",
+            "format": "date-time",
+            "readOnly": true
+          }
+        },
+        "description": "Комментарий"
+      },
+      "BookingDto": {
+        "required": [
+          "end",
+          "itemId",
+          "start"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "id бронирования",
+            "format": "int64",
+            "readOnly": true,
+            "example": 1
+          },
+          "itemId": {
+            "type": "integer",
+            "description": "id бронируемой вещи",
+            "format": "int64",
+            "example": 1
+          },
+          "start": {
+            "type": "string",
+            "description": "Желаемая дата начала аренды",
+            "format": "date-time"
+          },
+          "end": {
+            "type": "string",
+            "description": "Желаемая дата окончания аренды",
+            "format": "date-time"
+          }
+        },
+        "description": "Заявка на бронирование вещи"
+      }
+    }
   }
 }
